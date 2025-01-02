@@ -7,10 +7,12 @@ export const StateContext = React.createContext({
   sensitivity: 40,
   jitter: 0,
   enableRandomColors: false,
+  useRequestAnimationFrame: false,
   setDensity: (_: number) => {},
   setSensitivity: (_: number) => {},
   setJitter: (_: number) => {},
   setEnableRandomColors: (_: boolean) => {},
+  setUseRequestAnimationFrame: (_: boolean) => {},
 });
 
 function StateProvider({ children }: { children: React.ReactNode }) {
@@ -19,6 +21,7 @@ function StateProvider({ children }: { children: React.ReactNode }) {
   const [jitter, setJitter] = React.useState(0);
   const [enableRandomColors, setEnableRandomColors] =
     React.useState(true);
+  const [useRequestAnimationFrame, setUseRequestAnimationFrame] = React.useState(false);
 
   const location = useLocation();
 
@@ -34,11 +37,13 @@ function StateProvider({ children }: { children: React.ReactNode }) {
         density,
         sensitivity,
         jitter,
+        useRequestAnimationFrame,
         enableRandomColors,
         setDensity,
         setSensitivity,
         setJitter,
         setEnableRandomColors,
+        setUseRequestAnimationFrame,
       }}
     >
       {children}

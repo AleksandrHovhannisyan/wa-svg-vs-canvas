@@ -1,18 +1,19 @@
 //
 // TEST: TOUCAN
 //
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
-import { normalize, random } from '../../utils';
-import useInnerSize from '../../hooks/use-inner-size';
+import { normalize, random } from "../../utils";
+import useInnerSize from "../../hooks/use-inner-size";
 
-import ControlPanel from '../../components/ControlPanel';
-import { StateContext } from '../../components/StateProvider';
+import ControlPanel from "../../components/ControlPanel";
+import { StateContext } from "../../components/StateProvider";
 
 function ReactCanvas() {
   const ref = React.useRef<HTMLCanvasElement>(null);
-  const { density, sensitivity, jitter } =
+  const animationFrame = React.useRef<number | null>(null);
+  const { density, sensitivity, jitter, useRequestAnimationFrame } =
     React.useContext(StateContext);
 
   const devicePixelRatio = window.devicePixelRatio || 1;
@@ -20,8 +21,10 @@ function ReactCanvas() {
 
   React.useEffect(() => {
     let context: CanvasRenderingContext2D | null = null;
+    let mouseX: number = window.innerWidth / 2;
+    let mouseY: number = window.innerHeight / 2;
 
-    function handleMove(event: any) {
+    function repaintCanvas() {
       const canvas = ref.current;
 
       if (!canvas) {
@@ -29,7 +32,7 @@ function ReactCanvas() {
       }
 
       if (!context) {
-        context = canvas.getContext('2d');
+        context = canvas.getContext("2d");
         if (!context) {
           // Stupid TS
           return;
@@ -39,7 +42,7 @@ function ReactCanvas() {
       }
 
       context.clearRect(0, 0, canvas.width, canvas.height);
-      context.fillStyle = 'red';
+      context.fillStyle = "red";
 
       for (let rowIndex = 0; rowIndex <= density; rowIndex++) {
         for (let colIndex = 0; colIndex <= density; colIndex++) {
@@ -50,7 +53,7 @@ function ReactCanvas() {
           const cx =
             normalize(rowIndex, 0, density, 0, innerSize) +
             normalize(
-              event.clientX,
+              mouseX,
               0,
               innerSize * devicePixelRatio,
               -sensitivity * 2,
@@ -60,7 +63,7 @@ function ReactCanvas() {
           const cy =
             normalize(colIndex, 0, density, 0, innerSize) +
             normalize(
-              event.clientY,
+              mouseY,
               0,
               innerSize * devicePixelRatio,
               -sensitivity * 2,
@@ -69,13 +72,7 @@ function ReactCanvas() {
             yJitter +
             32;
 
-          context.arc(
-            cx,
-            cy,
-            (innerSize / density) * 0.4,
-            0,
-            Math.PI * 2
-          );
+          context.arc(cx, cy, (innerSize / density) * 0.4, 0, Math.PI * 2);
 
           context.fill();
           context.closePath();
@@ -83,21 +80,41 @@ function ReactCanvas() {
       }
     }
 
-    window.addEventListener('pointermove', handleMove);
+    function animate() {
+      animationFrame.current = window.requestAnimationFrame(() => {
+        repaintCanvas();
+        animate();
+      })
+    }
 
-    handleMove({
-      clientX: window.innerWidth / 2,
-      clientY: window.innerHeight / 2,
-    });
+    function handlePointerMove(event: Partial<MouseEvent>) {
+      mouseX = event.clientX!;
+      mouseY = event.clientY!;
+      if (!useRequestAnimationFrame) {
+        repaintCanvas();
+      }
+    }
+
+    // If the checkbox is checked, fire off a continuous rAF animation loop
+    // that repaints the canvas at the current (x, y), synced with the device's refresh rate.
+    if (useRequestAnimationFrame) {
+      animate();
+    } else {
+      // Initial paint for non-rAF version
+      repaintCanvas();
+    }
+
+    // Always do this to update the (x, y) coordinate of the mouse
+    window.addEventListener("pointermove", handlePointerMove);
 
     return () => {
-      window.removeEventListener('pointermove', handleMove);
-      context?.scale(
-        1 / window.devicePixelRatio,
-        1 / window.devicePixelRatio
-      );
+      window.removeEventListener("pointermove", handlePointerMove);
+      if (typeof animationFrame.current === 'number') {
+        window.cancelAnimationFrame(animationFrame.current);
+      }
+      context?.scale(1 / window.devicePixelRatio, 1 / window.devicePixelRatio);
     };
-  }, [density, sensitivity, jitter, devicePixelRatio, innerSize]);
+  }, [density, sensitivity, jitter, devicePixelRatio, innerSize, useRequestAnimationFrame]);
 
   return (
     <>

@@ -8,9 +8,11 @@ function ControlPanel() {
     density,
     sensitivity,
     jitter,
+    useRequestAnimationFrame,
     setDensity,
     setSensitivity,
     setJitter,
+    setUseRequestAnimationFrame,
   } = React.useContext(StateContext);
   // const id = React.useId();
 
@@ -62,6 +64,18 @@ function ControlPanel() {
             setJitter(Number(ev.target.value));
           }}
         />
+      </Control>
+      <Control>
+        <Header>
+          Use requestAnimationFrame
+          <input
+            type="checkbox"
+            checked={useRequestAnimationFrame}
+            onChange={(ev) => {
+              setUseRequestAnimationFrame(ev.target.checked);
+            }}
+          />
+        </Header>
       </Control>
       {/* <Control as="div">
         <Header>Random Colors</Header>

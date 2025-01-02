@@ -87,9 +87,9 @@ function ReactCanvas() {
       })
     }
 
-    function handlePointerMove(event: Partial<MouseEvent>) {
-      mouseX = event.clientX!;
-      mouseY = event.clientY!;
+    function handlePointerMove(event: MouseEvent) {
+      mouseX = event.clientX;
+      mouseY = event.clientY;
       if (!useRequestAnimationFrame) {
         repaintCanvas();
       }
